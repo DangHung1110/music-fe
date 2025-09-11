@@ -1,5 +1,5 @@
 import React from "react";
-import Dashboard from "../components/dashboard";
+import Dashboard from "../pages/Dashboard/Dashboard";
 import {Route} from "react-router-dom";
 
 const DashboardRouter = [
