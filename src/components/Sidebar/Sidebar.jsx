@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const Sidebar = () => {
   return (
@@ -11,27 +12,27 @@ const Sidebar = () => {
       </div>
       
       <nav className="flex flex-col gap-2 mt-2">
-        <a 
+        <Link 
+          to="/"
           className="text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent rounded-lg px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 no-underline flex items-center gap-3" 
-          href="#home"
         >
           <span className="text-lg">🏠</span>
           <span>Trang chủ</span>
-        </a>
-        <a 
+        </Link>
+        <Link 
+          to="/auth/login"
           className="text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent rounded-lg px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 no-underline flex items-center gap-3" 
-          href="#browse"
         >
-          <span className="text-lg">🔎</span>
-          <span>Khám phá</span>
-        </a>
-        <a 
+          <span className="text-lg">🔐</span>
+          <span>Đăng nhập</span>
+        </Link>
+        <Link 
+          to="/auth/register"
           className="text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent rounded-lg px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 no-underline flex items-center gap-3" 
-          href="#library"
         >
-          <span className="text-lg">📚</span>
-          <span>Thư viện</span>
-        </a>
+          <span className="text-lg">📝</span>
+          <span>Đăng ký</span>
+        </Link>
       </nav>
     </aside>
   );
