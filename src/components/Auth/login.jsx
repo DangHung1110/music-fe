@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import authService from "../../services/auth.jsx";
 import { useAuthStore } from "../../store/auth.js";
 
+
 const Login = () => {
   const navigate = useNavigate();
   const { login, setTokens, setSession, setUser } = useAuthStore();
@@ -85,14 +86,33 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    console.log("Google login clicked - Coming soon!");
-    // TODO: Implement Google OAuth later
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.login_with_google();
+      if (!result.success) {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError("Có lỗi xảy ra khi đăng nhập Google");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleFacebookLogin = () => {
-    console.log("Facebook login clicked - Coming soon!");
-    // TODO: Implement Facebook OAuth later
+  const handleFacebookLogin = async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.login_with_facebook();
+      if (!result.success) {
+        setError(result.error);
+      }
+      // If successful, user will be redirected to Facebook OAuth
+    } catch (err) {
+      setError("Có lỗi xảy ra khi đăng nhập Facebook");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
