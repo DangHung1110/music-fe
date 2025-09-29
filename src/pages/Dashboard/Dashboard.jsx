@@ -1,10 +1,14 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import Topbar from "../../components/Topbar/Topbar";
 import Player from "../../components/Player/Player";
 import Card from "../../components/Card/Card";
+import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
+  const location = useLocation();
+
   const featured = [
     { id: 1, title: "Deep Focus", subtitle: "Tập trung không xao nhãng" },
     { id: 2, title: "Chill Vibes", subtitle: "Thư giãn cuối ngày" },
@@ -12,38 +16,47 @@ const Dashboard = () => {
     { id: 4, title: "Lo-Fi Beats", subtitle: "Học tập hiệu quả" },
   ];
 
+  // ✅ CHỈ hiển thị featured khi ở ĐÚNG trang chủ "/" - không phải sub-route
+  const showFeatured = location.pathname === "/";
+
   return (
-    <div className="bg-gray-900 min-h-screen text-white" style={{ background: 'linear-gradient(135deg, #0b0b0f 0%, #111318 50%, #0b0b0f 100%)' }}>
-      {/* Background gradients */}
-      <div 
-        className="absolute inset-0 opacity-12 pointer-events-none" 
-        style={{
-          background: 'radial-gradient(900px 400px at 80% -10%, rgba(29,185,84,.12), transparent 60%), radial-gradient(700px 300px at 20% -10%, rgba(34,211,238,.10), transparent 60%)'
-        }} 
-      />
-      
-      <div className="grid grid-cols-[240px_1fr] gap-4 p-4 pb-24 relative z-10">
-        <Sidebar />
-        
-        <main className="bg-gray-800 border border-gray-700 rounded-2xl p-4">
-          <Topbar />
-          
-          <section className="mt-4">
-            <h2 className="text-lg mb-4 font-semibold">Nổi bật hôm nay</h2>
-            <div className="grid grid-cols-4 gap-3">
-              {featured.map((item) => (
-                <Card
-                  key={item.id}
-                  title={item.title}
-                  subtitle={item.subtitle}
-                  onClick={() => console.log(`Clicked on ${item.title}`)}
-                />
-              ))}
-            </div>
-          </section>
+    <div className="bg-gray-900 text-white min-h-screen flex flex-col">
+      {/* Grid gồm 2 cột: Sidebar + Main */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar cố định 240px */}
+        <Sidebar className="w-60 flex-shrink-0" />
+
+        {/* Main chiếm toàn bộ phần còn lại */}
+        <main className="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-2xl m-4 overflow-hidden">
+          {/* Topbar */}
+          <div className="p-4 border-b border-gray-700">
+            <Topbar />
+          </div>
+
+          {/* Nội dung (Outlet) chiếm toàn bộ chiều cao còn lại */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <Outlet />
+
+            {showFeatured && (
+              <section className="mt-4">
+                <h2 className="text-lg mb-4 font-semibold">Nổi bật hôm nay</h2>
+                <div className="grid grid-cols-4 gap-3">
+                  {featured.map((item) => (
+                    <Card
+                      key={item.id}
+                      title={item.title}
+                      subtitle={item.subtitle}
+                      onClick={() => console.log(`Clicked on ${item.title}`)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         </main>
       </div>
-      
+
+      {/* Player cố định dưới cùng */}
       <Player />
     </div>
   );

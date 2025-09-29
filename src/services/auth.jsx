@@ -4,6 +4,7 @@ export default {
     async login(credentials) {
         try {
             const response = await api.post("auth/login", credentials);
+            console.log(response);
             return {
                 success: true,
                 data: response

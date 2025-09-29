@@ -33,6 +33,13 @@ const Sidebar = () => {
           <span className="text-lg">📝</span>
           <span>Đăng ký</span>
         </Link>
+        <Link 
+          to="/playlists"
+          className="text-gray-400 hover:text-white hover:bg-gray-700 border border-transparent rounded-lg px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 no-underline flex items-center gap-3" 
+        >
+          <span className="text-lg">📝</span>
+          <span>PlayLists</span>
+        </Link>
       </nav>
     </aside>
   );
