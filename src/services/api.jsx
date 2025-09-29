@@ -3,11 +3,11 @@ import { useAuthStore } from '../store/auth';
 
 const api = axios.create({
   baseURL: 'http://localhost:8000/api/v1/',
-  withCredentials: false, // Tạm thời set false để tránh CORS
+  withCredentials: false,
 });
 
 api.interceptors.request.use((config) => {
-  const { accessToken, isTokenExpired, refreshAccessToken } = useAuthStore.getState(); 
+  const { accessToken, isTokenExpired } = useAuthStore.getState(); 
   
   if (accessToken && !isTokenExpired()) {
     config.headers.Authorization = `Bearer ${accessToken}`;

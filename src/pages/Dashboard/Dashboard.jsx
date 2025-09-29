@@ -4,9 +4,13 @@ import Sidebar from "../../components/Sidebar/Sidebar";
 import Topbar from "../../components/Topbar/Topbar";
 import Player from "../../components/Player/Player";
 import Card from "../../components/Card/Card";
+import OAuthTest from "../../components/OAuthTest";
+import { useAuthStore } from "../../store/auth";
 import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
+  const { isAuthenticated } = useAuthStore();
+  
   const location = useLocation();
 
   const featured = [
