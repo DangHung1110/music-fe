@@ -81,7 +81,7 @@ const PlayLists = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#121212] p-6 text-white font-sans">
+    <div className="min-h-full w-full bg-[#121212] p-6 text-white font-sans">
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Your Playlists</h1>

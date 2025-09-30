@@ -24,7 +24,7 @@ const Dashboard = () => {
   const showFeatured = location.pathname === "/";
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div className="bg-gray-900 text-white h-screen overflow-hidden flex flex-col">
       {/* Grid gồm 2 cột: Sidebar + Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar cố định 240px */}
@@ -38,7 +38,7 @@ const Dashboard = () => {
           </div>
 
           {/* Nội dung (Outlet) chiếm toàn bộ chiều cao còn lại */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 pb-28">
             <Outlet />
 
             {showFeatured && (
