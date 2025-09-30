@@ -31,6 +31,7 @@ const Login = () => {
 
     try {
       const result = await authService.login(formData);
+      console.log("Login API result:", result.data); 
 
       if (result.success) {
         const { metadata } = result.data;
@@ -56,7 +57,7 @@ const Login = () => {
         const inlineUser = metadata?.user || metadata?.users;
         if (inlineUser) {
           setUser(inlineUser);
-          navigate("/dashboard");
+          navigate("/");
           return;
         }
 
