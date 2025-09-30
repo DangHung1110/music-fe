@@ -30,7 +30,9 @@ const Topbar = () => {
   const handleLogout = async () => {
     try {
       await authService.logout({ sessionId, refreshToken });
-    } catch {}
+    } catch (error){
+      console.error("Logout failed:", error);
+    }
     logout();
     navigate("/auth/login");
   };
