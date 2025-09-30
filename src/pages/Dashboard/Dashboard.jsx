@@ -24,20 +24,22 @@ const Dashboard = () => {
   const showFeatured = location.pathname === "/";
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen flex flex-col">
+    <div className="bg-gray-900 text-white h-screen flex flex-col overflow-hidden">
       {/* Grid gồm 2 cột: Sidebar + Main */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar cố định 240px */}
-        <Sidebar className="w-60 flex-shrink-0" />
+        <div className="w-60 flex-shrink-0 p-4">
+          <Sidebar className="w-full h-full" />
+        </div>
 
         {/* Main chiếm toàn bộ phần còn lại */}
-        <main className="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-2xl m-4 overflow-hidden">
+        <main className="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-2xl m-4 ml-0 overflow-hidden">
           {/* Topbar */}
-          <div className="p-4 border-b border-gray-700">
+          <div className="p-4 border-b border-gray-700 flex-shrink-0">
             <Topbar />
           </div>
 
-          {/* Nội dung (Outlet) chiếm toàn bộ chiều cao còn lại */}
+          {/* Nội dung (Outlet) chiếm toàn bộ chiều cao còn lại với scroll riêng */}
           <div className="flex-1 overflow-y-auto p-4">
             <Outlet />
 

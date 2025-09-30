@@ -6,7 +6,7 @@ const Sidebar = () => {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <aside className="bg-gray-800 border border-gray-700 rounded-2xl p-4 h-[calc(100vh-112px)] sticky top-4 flex flex-col">
+    <aside className="bg-gray-800 border border-gray-700 rounded-2xl p-4 h-full flex flex-col">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-cyan-400 flex items-center justify-center text-black font-extrabold text-lg">
           ♪
