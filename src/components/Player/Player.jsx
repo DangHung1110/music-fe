@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { usePlayerStore } from "../../store/player";
+import { useAuthStore } from "../../store/auth";
 import playlistService from "../../services/playlists.jsx"; 
 import { 
   Play, 
@@ -8,12 +9,14 @@ import {
   SkipBack, 
   Volume2, 
   VolumeX,
-  Info 
+  Info,
+  Plus 
 } from 'lucide-react';
 import NowPlayingSidebar from '../NowPlaying/NowPlayingSidebar'; 
 
 const Player = () => {
   const { currentSong, playNext, playPrev } = usePlayerStore();
+  const { isAuthenticated } = useAuthStore();
   const audioRef = useRef(null);
   const [sidebarOpen, setSidebarOpen] = useState(false); 
   const [isPlaying, setIsPlaying] = useState(false);
@@ -23,7 +26,7 @@ const Player = () => {
   const [loadingPlaylists, setLoadingPlaylists] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // ✅ Phát nhạc khi đổi bài
+  // Phát nhạc khi đổi bài
   useEffect(() => {
     if (audioRef.current && currentSong?.audio) {
       audioRef.current.src = currentSong.audio;
@@ -50,7 +53,7 @@ const Player = () => {
     }
   };
 
-  // 📌 Mở popup và tải playlist
+  //  Mở popup và tải playlist
   const openSavePopup = async () => {
     setShowPopup(true);
     setLoadingPlaylists(true);
@@ -95,67 +98,95 @@ const Player = () => {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-white/10 px-4 py-3 z-30">
-        <div className="flex items-center justify-between gap-4">
-          {/* Track Info */}
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {currentSong && (
+      <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-gray-800 h-20 z-30">
+        <div className="flex items-center justify-between gap-4 h-full px-4">
+          {/* Track Info - Left */}
+          <div className="flex items-center gap-3 flex-[0_0_30%] min-w-0">
+            {currentSong ? (
               <>
                 <img
-                  src={currentSong.image || currentSong.cover_url || '/placeholder-album.png'}
+                  src={currentSong.image || currentSong.cover_url || 'https://via.placeholder.com/56?text=♪'}
                   alt={currentSong.name || currentSong.title}
-                  className="w-14 h-14 rounded object-cover"
+                  className="w-14 h-14 rounded object-cover shadow-lg"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/56?text=♪';
+                  }}
                 />
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-semibold text-white truncate">
+                  <h4 className="text-sm font-medium text-white truncate hover:underline cursor-pointer">
                     {currentSong.name || currentSong.title}
                   </h4>
                   <p className="text-xs text-gray-400 truncate">
-                    {currentSong.artist_name || currentSong.artist}
+                    {currentSong.artist_name || currentSong.artist || 'Unknown Artist'}
                   </p>
                 </div>
-                {/* Thêm nút mở sidebar */}
+                {isAuthenticated && (
+                  <button
+                    onClick={openSavePopup}
+                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                    title="Lưu vào playlist"
+                  >
+                    <Plus className="w-4 h-4 text-gray-400 hover:text-white" />
+                  </button>
+                )}
                 <button
                   onClick={() => setSidebarOpen(true)}
                   className="p-2 rounded-full hover:bg-white/10 transition-colors"
                   title="Xem thông tin bài hát"
                 >
-                  <Info className="w-5 h-5 text-gray-400 hover:text-white" />
+                  <Info className="w-4 h-4 text-gray-400 hover:text-white" />
                 </button>
               </>
+            ) : (
+              <div className="text-gray-500 text-sm">Chưa có bài hát nào</div>
             )}
           </div>
 
-          {/* Player Controls */}
-          <div className="flex items-center gap-4">
-            <button className="p-2 hover:text-white transition-colors" onClick={playPrev}>
-              <SkipBack className="w-5 h-5" />
-            </button>
-            
-            <button
-              onClick={togglePlay}
-              className="p-3 bg-white rounded-full hover:scale-105 transition-transform"
-            >
-              {isPlaying ? (
-                <Pause className="w-5 h-5 text-black" />
-              ) : (
-                <Play className="w-5 h-5 text-black" />
-              )}
-            </button>
+          {/* Player Controls - Center */}
+          <div className="flex flex-col items-center justify-center flex-1 gap-1">
+            <div className="flex items-center gap-2">
+              <button 
+                className="p-2 hover:text-white text-gray-400 transition-colors" 
+                onClick={playPrev}
+                title="Bài trước"
+              >
+                <SkipBack className="w-5 h-5" />
+              </button>
+              
+              <button
+                onClick={togglePlay}
+                className="p-2 bg-white rounded-full hover:scale-110 transition-transform shadow-lg"
+                disabled={!currentSong}
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 text-black" fill="black" />
+                ) : (
+                  <Play className="w-5 h-5 text-black ml-0.5" fill="black" />
+                )}
+              </button>
 
-            <button className="p-2 hover:text-white transition-colors" onClick={playNext}>
-              <SkipForward className="w-5 h-5" />
-            </button>
+              <button 
+                className="p-2 hover:text-white text-gray-400 transition-colors" 
+                onClick={playNext}
+                title="Bài tiếp"
+              >
+                <SkipForward className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Volume Control */}
-          <div className="flex items-center gap-2 flex-1 justify-end">
-            <Volume2 className="w-5 h-5 text-gray-400" />
+          {/* Volume Control - Right */}
+          <div className="flex items-center gap-2 flex-[0_0_30%] justify-end">
+            <Volume2 className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition-colors" />
             <input
               type="range"
               min="0"
               max="100"
-              className="w-24 h-1 bg-gray-600 rounded-full appearance-none cursor-pointer"
+              defaultValue="70"
+              className="w-24 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-white"
+              style={{
+                background: 'linear-gradient(to right, #1db954 0%, #1db954 70%, #404040 70%, #404040 100%)'
+              }}
             />
           </div>
         </div>
@@ -179,62 +210,66 @@ const Player = () => {
         <source src={currentSong?.audio} type="audio/mpeg" />
       </audio>
 
-      {/*  Popup chọn playlist */}
+      {/* Popup chọn playlist */}
       {showPopup && (
         <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 2000,
-          }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
           onClick={() => setShowPopup(false)}
         >
           <div
-            style={{
-              background: "#fff",
-              borderRadius: "12px",
-              padding: "20px",
-              minWidth: "300px",
-              maxHeight: "70vh",
-              overflowY: "auto",
-            }}
+            className="bg-gray-900 rounded-lg shadow-2xl w-full max-w-md mx-4 max-h-[70vh] overflow-hidden flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0 }}>📁 Chọn playlist để lưu</h3>
+            <div className="px-6 py-4 border-b border-gray-800">
+              <h3 className="text-xl font-bold text-white">Lưu vào playlist</h3>
+              <p className="text-sm text-gray-400 mt-1">
+                {currentSong?.name || currentSong?.title}
+              </p>
+            </div>
 
-            {loadingPlaylists ? (
-              <p>Đang tải playlist...</p>
-            ) : playlists.length === 0 ? (
-              <p>Bạn chưa có playlist nào.</p>
-            ) : (
-              playlists.map((pl) => (
-                <button
-                  key={pl.id}
-                  onClick={() => saveToPlaylist(pl.id)}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    padding: "10px",
-                    margin: "5px 0",
-                    textAlign: "left",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    background: "#f8f8f8",
-                    cursor: "pointer",
-                  }}
-                  disabled={saving}
-                >
-                  📻 {pl.title}
-                </button>
-              ))
-            )}
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              {loadingPlaylists ? (
+                <div className="text-center py-8">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                  <p className="text-gray-400 mt-4">Đang tải playlist...</p>
+                </div>
+              ) : playlists.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400">Bạn chưa có playlist nào.</p>
+                  <p className="text-sm text-gray-500 mt-2">Tạo playlist mới để bắt đầu lưu bài hát.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {playlists.map((pl) => (
+                    <button
+                      key={pl.id}
+                      onClick={() => saveToPlaylist(pl.id)}
+                      disabled={saving}
+                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-white/10 transition-colors text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                    >
+                      <div className="w-12 h-12 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">🎵</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{pl.title}</p>
+                        {pl.description && (
+                          <p className="text-sm text-gray-400 truncate">{pl.description}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-4 py-4 border-t border-gray-800">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="w-full px-4 py-2 rounded-full bg-white text-black font-semibold hover:scale-105 transition-transform"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}

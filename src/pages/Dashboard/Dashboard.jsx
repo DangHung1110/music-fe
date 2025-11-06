@@ -1,61 +1,100 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar/Sidebar";
 import Topbar from "../../components/Topbar/Topbar";
 import Player from "../../components/Player/Player";
-import Card from "../../components/Card/Card";
-import OAuthTest from "../../components/OAuthTest";
+import SongList from "../../components/SongList/SongList";
+import { fetchLatestTracks } from "../../services/jamendo";
+import api from "../../services/api";
 import { useAuthStore } from "../../store/auth";
 import { Outlet } from "react-router-dom";
 
 const Dashboard = () => {
   const { isAuthenticated } = useAuthStore();
-  
   const location = useLocation();
+  const [latestSongs, setLatestSongs] = useState([]);
+  const [loadingSongs, setLoadingSongs] = useState(false);
+  const [jamendoClientId, setJamendoClientId] = useState(null);
 
-  const featured = [
-    { id: 1, title: "Deep Focus", subtitle: "Tập trung không xao nhãng" },
-    { id: 2, title: "Chill Vibes", subtitle: "Thư giãn cuối ngày" },
-    { id: 3, title: "Top Hits", subtitle: "BXH Việt Nam" },
-    { id: 4, title: "Lo-Fi Beats", subtitle: "Học tập hiệu quả" },
-  ];
+  // Lấy Jamendo Client ID từ BE
+  useEffect(() => {
+    const getJamendoClientId = async () => {
+      try {
+        const response = await api.get('/music/jamendo-client-id');
+        const clientId = response?.metadata?.client_id || response?.client_id;
+        if (clientId) {
+          setJamendoClientId(clientId);
+        } else {
+          // Fallback: dùng env variable hoặc default
+          setJamendoClientId(import.meta.env.VITE_JAMENDO_CLIENT_ID || null);
+        }
+      } catch (error) {
+        console.error('Error fetching Jamendo Client ID:', error);
+        // Fallback: dùng env variable
+        setJamendoClientId(import.meta.env.VITE_JAMENDO_CLIENT_ID || null);
+      }
+    };
+    getJamendoClientId();
+  }, []);
 
-  // ✅ CHỈ hiển thị featured khi ở ĐÚNG trang chủ "/" - không phải sub-route
-  const showFeatured = location.pathname === "/";
+  useEffect(() => {
+    if (!jamendoClientId) return; // Chờ lấy Client ID
+
+    const loadLatestSongs = async () => {
+      setLoadingSongs(true);
+      try {
+        console.log('Fetching latest songs with Client ID:', jamendoClientId);
+        const tracks = await fetchLatestTracks({ 
+          clientId: jamendoClientId, 
+          limit: 10 
+        });
+        console.log('Fetched tracks:', tracks);
+        setLatestSongs(tracks || []);
+      } catch (error) {
+        console.error('Error fetching latest songs:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        setLatestSongs([]);
+      } finally {
+        setLoadingSongs(false);
+      }
+    };
+
+    if (location.pathname === "/") {
+      loadLatestSongs();
+    }
+  }, [location.pathname, jamendoClientId]);
+
+  // ✅ CHỈ hiển thị songs khi ở ĐÚNG trang chủ "/" - không phải sub-route
+  const showSongs = location.pathname === "/";
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen flex flex-col">
-      {/* Grid gồm 2 cột: Sidebar + Main */}
+    <div className="bg-black text-white h-screen flex flex-col overflow-hidden">
+      {/* Layout chính: Sidebar + Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar cố định 240px */}
-        <Sidebar className="w-60 flex-shrink-0" />
+        {/* Sidebar cố định - không scroll */}
+        <div className="w-64 flex-shrink-0 h-full">
+          <Sidebar />
+        </div>
 
-        {/* Main chiếm toàn bộ phần còn lại */}
-        <main className="flex-1 flex flex-col bg-gray-800 border border-gray-700 rounded-2xl m-4 overflow-hidden">
-          {/* Topbar */}
-          <div className="p-4 border-b border-gray-700">
+        {/* Main Content Area - scroll độc lập */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-gradient-to-b from-gray-900 via-gray-900 to-black">
+          {/* Topbar - cố định trên cùng */}
+          <div className="sticky top-0 z-10 bg-black/60 backdrop-blur-lg px-6 py-4 border-b border-gray-800/50">
             <Topbar />
           </div>
 
-          {/* Nội dung (Outlet) chiếm toàn bộ chiều cao còn lại */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <Outlet />
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pb-24">
+            <div className="max-w-[1950px] mx-auto">
+              <Outlet />
 
-            {showFeatured && (
-              <section className="mt-4">
-                <h2 className="text-lg mb-4 font-semibold">Nổi bật hôm nay</h2>
-                <div className="grid grid-cols-4 gap-3">
-                  {featured.map((item) => (
-                    <Card
-                      key={item.id}
-                      title={item.title}
-                      subtitle={item.subtitle}
-                      onClick={() => console.log(`Clicked on ${item.title}`)}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
+              {showSongs && (
+                <section className="mt-6 mb-8">
+                  <h2 className="text-2xl font-bold mb-6 text-white">Các bài hát mới</h2>
+                  <SongList songs={latestSongs} isLoading={loadingSongs} />
+                </section>
+              )}
+            </div>
           </div>
         </main>
       </div>
