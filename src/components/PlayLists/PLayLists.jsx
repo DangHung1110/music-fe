@@ -14,7 +14,6 @@ const PlayLists = () => {
   });
 
   const setQueue = usePlayerStore((state) => state.setQueue);
-  const setCurrentSong = usePlayerStore((state) => state.setCurrentSong);
 
   const handlePlayPlaylist = async (playlist) => {
     const result = await playlistService.getSongsInPlaylist(playlist.id);
@@ -76,8 +75,8 @@ const PlayLists = () => {
     }
   };
 
-  const handlePlaySong = (song) => {
-    setCurrentSong(song);
+  const handlePlaySong = (index) => {
+    setQueue(songs, index);
   };
 
   return (
@@ -185,11 +184,11 @@ const PlayLists = () => {
             <p className="text-gray-400">No songs in this playlist yet.</p>
           ) : (
             <div className="space-y-2">
-              {songs.map((song) => (
+              {songs.map((song, index) => (
                 <div
                   key={song.id}
                   className="flex justify-between items-center p-3 rounded-lg hover:bg-[#3e3e3e] cursor-pointer transition-colors"
-                  onClick={() => handlePlaySong(song)}
+                  onClick={() => handlePlaySong(index)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#1db954] to-[#121212] rounded-md"></div>

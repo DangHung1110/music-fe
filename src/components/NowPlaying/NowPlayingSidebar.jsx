@@ -37,12 +37,26 @@ const NowPlayingSidebar = ({ isOpen, onClose }) => {
     };
   }, [jamendoId, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [isOpen]);
+
   const toggleLike = async () => {
     if (!isAuthenticated) return alert('Vui lòng đăng nhập để thích bài hát');
     const res = await interactions.toggleLike(jamendoId);
     if (res.success) {
-      setIsLiked((v) => !v);
-      setLikeCount((c) => (isLiked ? Math.max(0, c - 1) : c + 1));
+      const liked = res.liked !== undefined ? res.liked === true : !isLiked;
+      setIsLiked(liked);
+      setLikeCount((c) => {
+        if (liked && !isLiked) return c + 1;
+        if (!liked && isLiked) return Math.max(0, c - 1);
+        return c;
+      });
     }
   };
 
@@ -63,61 +77,88 @@ const NowPlayingSidebar = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <aside className="fixed right-0 top-0 bottom-0 w-[360px] bg-gray-900 border-l border-gray-800 z-40 p-4 overflow-y-auto">
-      <div className="flex items-center justify-between mb-4">
+    <aside className="fixed right-0 top-0 bottom-20 w-[420px] bg-black border-l border-gray-800 z-40 overflow-hidden shadow-2xl shadow-black/50">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800 sticky top-0 bg-black">
         <h3 className="text-white font-semibold">Đang phát</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-white">✕</button>
       </div>
 
       {currentSong ? (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <img src={currentSong.image} alt={currentSong.name} className="w-16 h-16 rounded" />
-            <div>
-              <div className="text-white font-medium">{currentSong.name}</div>
-              <div className="text-gray-400 text-sm">{currentSong.artist_name}</div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button onClick={toggleLike} className={`px-3 py-1 rounded-md border ${isLiked ? 'border-pink-500 text-pink-400' : 'border-gray-600 text-gray-300'} hover:bg-white/5`}>
-              {isLiked ? '♥ Đã thích' : '♡ Thích'}
-            </button>
-            <div className="text-gray-400 text-sm">{likeCount} lượt thích</div>
-          </div>
-
-          <div>
-            <h4 className="text-white font-medium mb-2">Bình luận</h4>
-            {loading ? (
-              <div className="text-gray-400 text-sm">Đang tải...</div>
-            ) : comments.length === 0 ? (
-              <div className="text-gray-500 text-sm">Chưa có bình luận nào</div>
-            ) : (
-              <ul className="space-y-3">
-                {comments.map((c) => (
-                  <li key={c.id || `${c.user_id}-${c.created_at}`} className="bg-gray-800 border border-gray-700 rounded p-3">
-                    <div className="text-gray-300 text-sm whitespace-pre-wrap">{c.content}</div>
-                    <div className="text-gray-500 text-xs mt-1">{c.username || c.user_name || 'Người dùng'}</div>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <form onSubmit={submitComment} className="mt-3 flex gap-2">
-              <input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="flex-1 bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-white outline-none"
-                placeholder="Viết bình luận..."
+        <div className="flex flex-col h-full min-h-0">
+          <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-6">
+            {/* Artwork & meta */}
+            <section className="pt-5">
+              <img
+                src={currentSong.image || currentSong.cover_url || 'https://via.placeholder.com/400?text=♪'}
+                alt={currentSong.name}
+                className="w-full aspect-square rounded-lg object-cover shadow-2xl"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/400?text=♪';
+                }}
               />
-              <button disabled={posting} className="px-3 py-2 bg-green-500 text-black rounded text-sm font-semibold disabled:opacity-50">
-                Gửi
-              </button>
-            </form>
+              <div className="mt-4">
+                <div className="text-white font-bold text-lg truncate">{currentSong.name}</div>
+                <div className="text-gray-400 text-sm truncate">{currentSong.artist_name}</div>
+              </div>
+
+              <div className="flex items-center gap-4 mt-4">
+                <button
+                  onClick={toggleLike}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+                    isLiked ? 'bg-pink-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700'
+                  }`}
+                >
+                  {isLiked ? 'Đã thích' : 'Thích'}
+                </button>
+                <div className="text-gray-400 text-sm">{likeCount} lượt thích</div>
+              </div>
+            </section>
+
+            {/* Comments */}
+            <section>
+              <h4 className="text-white font-semibold mb-3">Bình luận</h4>
+              <form
+                onSubmit={submitComment}
+                className="flex gap-2 mb-4"
+              >
+                <input
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="flex-1 bg-gray-900 border border-gray-800 rounded px-3 py-2 text-sm text-white outline-none"
+                  placeholder={isAuthenticated ? 'Viết bình luận...' : 'Đăng nhập để bình luận'}
+                  disabled={!isAuthenticated || posting}
+                />
+                <button
+                  disabled={!isAuthenticated || posting || !newComment.trim()}
+                  className="px-4 py-2 bg-green-500 text-black rounded-full text-sm font-semibold disabled:opacity-50"
+                >
+                  Gửi
+                </button>
+              </form>
+              {!isAuthenticated && (
+                <p className="text-xs text-gray-500 mb-3">
+                  Bạn cần đăng nhập để gửi bình luận.
+                </p>
+              )}
+              {loading ? (
+                <div className="text-gray-400 text-sm">Đang tải...</div>
+              ) : comments.length === 0 ? (
+                <div className="text-gray-500 text-sm">Chưa có bình luận nào</div>
+              ) : (
+                <ul className="space-y-3">
+                  {comments.map((c) => (
+                    <li key={c.id || `${c.user_id}-${c.created_at}`} className="bg-gray-900 border border-gray-800 rounded-lg p-3">
+                      <div className="text-gray-200 text-sm whitespace-pre-wrap">{c.content}</div>
+                      <div className="text-gray-500 text-xs mt-1">{c.username || c.user_name || 'Người dùng'}</div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </div>
         </div>
       ) : (
-        <div className="text-gray-400 text-sm">Chưa chọn bài hát nào</div>
+        <div className="p-5 text-gray-400 text-sm">Chưa chọn bài hát nào</div>
       )}
     </aside>
   );

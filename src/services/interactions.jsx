@@ -5,7 +5,8 @@ const interactions = {
   async toggleLike(jamendoId) {
     try {
       const res = await api.post(`likes/songs/${encodeURIComponent(jamendoId)}/toggle`);
-      return { success: true, data: res };
+      const payload = res?.metadata || res;
+      return { success: true, data: payload, liked: payload?.liked };
     } catch (err) {
       return { success: false, error: err.response?.data?.detail || 'Toggle like failed' };
     }
@@ -14,7 +15,8 @@ const interactions = {
   async isLiked(jamendoId) {
     try {
       const res = await api.get(`likes/songs/${encodeURIComponent(jamendoId)}/is-liked`);
-      return { success: true, data: res?.is_liked === true };
+      const payload = res?.metadata || res;
+      return { success: true, data: payload?.is_liked === true };
     } catch (err) {
       return { success: false, data: false };
     }
@@ -23,9 +25,21 @@ const interactions = {
   async likeCount(jamendoId) {
     try {
       const res = await api.get(`likes/songs/${encodeURIComponent(jamendoId)}/count`);
-      return { success: true, data: res?.count ?? 0 };
+      const payload = res?.metadata || res;
+      return { success: true, data: payload?.count ?? 0 };
     } catch {
       return { success: false, data: 0 };
+    }
+  },
+
+  async getMyLikedSongIds() {
+    try {
+      const res = await api.get('likes/me/song-ids');
+      const payload = res?.metadata || res.data || res;
+      console.log('Liked song IDs payload:', payload);
+      return { success: true, data: payload?.song_ids || [], total: payload?.total || (payload?.song_ids?.length ?? 0) };
+    } catch (err) {
+      return { success: false, data: [], total: 0, error: err.response?.data?.detail || 'Failed to fetch liked songs' };
     }
   },
 
@@ -33,7 +47,8 @@ const interactions = {
   async listComments(jamendoId) {
     try {
       const res = await api.get(`comments/songs/${encodeURIComponent(jamendoId)}`);
-      return { success: true, data: res?.items || [] };
+      const payload = res?.metadata || res;
+      return { success: true, data: payload?.items || payload || [] };
     } catch {
       return { success: false, data: [] };
     }
@@ -42,7 +57,7 @@ const interactions = {
   async addComment(jamendoId, content) {
     try {
       const res = await api.post(`comments/songs/${encodeURIComponent(jamendoId)}`, { content });
-      return { success: true, data: res };
+      return { success: true, data: res?.metadata || res };
     } catch (err) {
       return { success: false, error: err.response?.data?.detail || 'Add comment failed' };
     }

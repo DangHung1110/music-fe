@@ -3,25 +3,11 @@ import { usePlayerStore } from '../../store/player';
 import { Play } from 'lucide-react';
 
 const SongList = ({ songs, isLoading }) => {
-  const { setCurrentSong } = usePlayerStore();
+  const { setQueue } = usePlayerStore();
 
-  const handlePlaySong = (song) => {
-    // Map Jamendo track data to player format
-    const trackData = {
-      id: song.id,
-      jamendo_id: song.id,
-      name: song.name,
-      title: song.name,
-      artist_name: song.artist_name || song.artist,
-      duration: song.duration,
-      audio: song.audio || song.audio_url,
-      cover_url: song.image || song.album_image,
-      image: song.image || song.album_image,
-      artist_id: song.artist_id,
-      album_id: song.album_id || null,
-      album_name: song.album_name || null,
-    };
-    setCurrentSong(trackData);
+  const handlePlaySong = (index) => {
+    if (!songs || songs.length === 0) return;
+    setQueue(songs, index);
   };
 
   const formatDuration = (seconds) => {
@@ -61,7 +47,7 @@ const SongList = ({ songs, isLoading }) => {
         <div
           key={song.id || index}
           className="group flex items-center gap-4 px-4 py-2 rounded-md hover:bg-white/10 transition-all duration-200 cursor-pointer"
-          onClick={() => handlePlaySong(song)}
+          onClick={() => handlePlaySong(index)}
         >
           {/* Index/Play button */}
           <div className="w-6 flex items-center justify-center flex-shrink-0">
@@ -70,7 +56,7 @@ const SongList = ({ songs, isLoading }) => {
               className="hidden group-hover:flex items-center justify-center w-6 h-6 rounded-full bg-green-500 hover:bg-green-400 hover:scale-110 transition-all shadow-lg shadow-green-500/50"
               onClick={(e) => {
                 e.stopPropagation();
-                handlePlaySong(song);
+                handlePlaySong(index);
               }}
             >
               <Play className="w-3.5 h-3.5 text-black ml-0.5" fill="black" />

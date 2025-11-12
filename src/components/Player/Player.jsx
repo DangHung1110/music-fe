@@ -18,8 +18,11 @@ const Player = () => {
   const { currentSong, playNext, playPrev } = usePlayerStore();
   const { isAuthenticated } = useAuthStore();
   const audioRef = useRef(null);
+  const lastVolumeRef = useRef(70);
   const [sidebarOpen, setSidebarOpen] = useState(false); 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(70);
+  const [isMuted, setIsMuted] = useState(false);
 
   const [showPopup, setShowPopup] = useState(false);
   const [playlists, setPlaylists] = useState([]);
@@ -33,12 +36,21 @@ const Player = () => {
       audioRef.current.load();
       audioRef.current
         .play()
-        .then(() => setIsPlaying(true))
+        .then(() => {
+          setIsPlaying(true);
+          setSidebarOpen(true); // auto open details like Spotify
+        })
         .catch(() => setIsPlaying(false));
+      audioRef.current.volume = (isMuted ? 0 : volume) / 100;
     } else {
       setIsPlaying(false);
     }
   }, [currentSong?.audio]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    audioRef.current.volume = (isMuted ? 0 : volume) / 100;
+  }, [volume, isMuted]);
 
   const togglePlay = () => {
     if (!audioRef.current || !currentSong?.audio) return;
@@ -76,7 +88,7 @@ const Player = () => {
     setSaving(true);
     try {
       const res = await playlistService.saveToPlaylist(playlistId, {
-   jamendo_id: currentSong.jamendo_id || currentSong.id,
+      jamendo_id: currentSong.jamendo_id || currentSong.id,
       name: currentSong.title || currentSong.name,
   
       audio: currentSong.audio,       // audio → file_url
@@ -113,29 +125,24 @@ const Player = () => {
                   }}
                 />
                 <div className="min-w-0 flex-1">
-                  <h4 className="text-sm font-medium text-white truncate hover:underline cursor-pointer">
-                    {currentSong.name || currentSong.title}
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-medium text-white truncate hover:underline cursor-pointer">
+                      {currentSong.name || currentSong.title}
+                    </h4>
+                    {isAuthenticated && (
+                      <button
+                        onClick={openSavePopup}
+                        className="p-1 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                        title="Thêm vào playlist"
+                      >
+                        <Plus className="w-4 h-4 text-gray-400 hover:text-white" />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 truncate">
                     {currentSong.artist_name || currentSong.artist || 'Unknown Artist'}
                   </p>
                 </div>
-                {isAuthenticated && (
-                  <button
-                    onClick={openSavePopup}
-                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                    title="Lưu vào playlist"
-                  >
-                    <Plus className="w-4 h-4 text-gray-400 hover:text-white" />
-                  </button>
-                )}
-                <button
-                  onClick={() => setSidebarOpen(true)}
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                  title="Xem thông tin bài hát"
-                >
-                  <Info className="w-4 h-4 text-gray-400 hover:text-white" />
-                </button>
               </>
             ) : (
               <div className="text-gray-500 text-sm">Chưa có bài hát nào</div>
@@ -177,15 +184,52 @@ const Player = () => {
 
           {/* Volume Control - Right */}
           <div className="flex items-center gap-2 flex-[0_0_30%] justify-end">
-            <Volume2 className="w-5 h-5 text-gray-400 hover:text-white cursor-pointer transition-colors" />
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              title="Xem thông tin bài hát"
+            >
+              <Info className="w-5 h-5 text-gray-400 hover:text-white" />
+            </button>
+            <button
+              onClick={() => {
+                if (!audioRef.current) return;
+                if (isMuted || volume === 0) {
+                  setIsMuted(false);
+                  const restored = lastVolumeRef.current || 50;
+                  setVolume(restored);
+                } else {
+                  lastVolumeRef.current = volume || 50;
+                  setIsMuted(true);
+                }
+              }}
+              className="p-2 rounded-full hover:bg-white/10 transition-colors"
+              title={isMuted || volume === 0 ? 'Bật âm thanh' : 'Tắt tiếng'}
+            >
+              {isMuted || volume === 0 ? (
+                <VolumeX className="w-5 h-5 text-gray-400 hover:text-white" />
+              ) : (
+                <Volume2 className="w-5 h-5 text-gray-400 hover:text-white" />
+              )}
+            </button>
             <input
               type="range"
               min="0"
               max="100"
-              defaultValue="70"
-              className="w-24 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-white"
+              value={isMuted ? 0 : volume}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                if (value > 0) {
+                  lastVolumeRef.current = value;
+                  setIsMuted(false);
+                } else {
+                  setIsMuted(true);
+                }
+                setVolume(value);
+              }}
+              className="w-28 h-1 bg-gray-700 rounded-full appearance-none cursor-pointer accent-white"
               style={{
-                background: 'linear-gradient(to right, #1db954 0%, #1db954 70%, #404040 70%, #404040 100%)'
+                background: `linear-gradient(to right, #1db954 0%, #1db954 ${isMuted ? 0 : volume}%, #404040 ${isMuted ? 0 : volume}%, #404040 100%)`
               }}
             />
           </div>
