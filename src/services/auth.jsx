@@ -4,6 +4,7 @@ export default {
     async login(credentials) {
         try {
             const response = await api.post("auth/login", credentials);
+            console.log(response);
             return {
                 success: true,
                 data: response
@@ -11,6 +12,64 @@ export default {
         }
         catch(err) {
             let errMess = err.response?.data?.message || "Login failed";
+            return {
+                success: false,
+                error: errMess
+            }
+        }
+    },
+
+    async login_with_google() {
+        try {
+            // Get Google OAuth URL from backend
+            const response = await api.get("auth/google");
+            const authUrl = response.metadata?.auth_url;
+            
+            if (authUrl) {
+                // Redirect to Google OAuth
+                window.location.href = authUrl;
+                return {
+                    success: true,
+                    message: "Redirecting to Google OAuth..."
+                }
+            } else {
+                return {
+                    success: false,
+                    error: "Failed to get Google OAuth URL"
+                }
+            }
+        }
+        catch(err) {
+            let errMess = err.response?.data?.message || "Google login failed";
+            return {
+                success: false,
+                error: errMess
+            }
+        }
+    },
+
+    async login_with_facebook() {
+        try {
+            // Get Facebook OAuth URL from backend
+            const response = await api.get("auth/facebook");
+            const authUrl = response.metadata?.auth_url;
+            
+            if (authUrl) {
+                // Redirect to Facebook OAuth
+                window.location.href = authUrl;
+                return {
+                    success: true,
+                    message: "Redirecting to Facebook OAuth..."
+                }
+            } else {
+                return {
+                    success: false,
+                    error: "Failed to get Facebook OAuth URL"
+                }
+            }
+        }
+        catch(err) {
+            let errMess = err.response?.data?.message || "Facebook login failed";
             return {
                 success: false,
                 error: errMess
