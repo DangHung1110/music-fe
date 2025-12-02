@@ -44,8 +44,6 @@ const Sidebar = () => {
               to="/library"
               className="text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg px-4 py-3 transition-all duration-200 no-underline flex items-center gap-4 font-medium group" 
             >
-              <span className="text-xl group-hover:scale-110 transition-transform">📚</span>
-              <span>Thư viện</span>
             </Link>
             <Link 
               to="/playlists"

@@ -1,6 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import playlistService from "../../services/playlists.jsx";
 import { usePlayerStore } from "../../store/player";
+import { Plus, MoreVertical, Play, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "../ui/dialog";
+import { ScrollArea } from "../ui/scroll-area";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 
 const PlayLists = () => {
   const [playlists, setPlaylists] = useState([]);
@@ -12,6 +25,8 @@ const PlayLists = () => {
     description: "",
     source: "Local",
   });
+  const [openDropdownId, setOpenDropdownId] = useState(null);
+  const dropdownRefs = useRef({});
 
   const setQueue = usePlayerStore((state) => state.setQueue);
 
@@ -54,6 +69,21 @@ const PlayLists = () => {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      Object.keys(dropdownRefs.current).forEach((id) => {
+        if (
+          dropdownRefs.current[id] &&
+          !dropdownRefs.current[id].contains(event.target)
+        ) {
+          setOpenDropdownId(null);
+        }
+      });
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleDeletePlaylist = async (playlist_id) => {
     const result = await playlistService.deletePlaylist(playlist_id);
     if (result.success) {
@@ -84,125 +114,179 @@ const PlayLists = () => {
       {/* Header */}
       <header className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Your Playlists</h1>
-        <button
-          onClick={() => setShowCreateBox(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-[#1ed760] text-black font-semibold rounded-full hover:bg-[#1db954] transition-colors"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 3v4H6v6h4v4h2v-4h4V7h-4V3h-2z" />
-          </svg>
-          New Playlist
-        </button>
+        <Dialog open={showCreateBox} onOpenChange={setShowCreateBox}>
+          <Button
+            onClick={() => setShowCreateBox(true)}
+            className="flex items-center gap-2 rounded-full"
+          >
+            <Plus className="w-5 h-5" />
+            New Playlist
+          </Button>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Playlist</DialogTitle>
+              <DialogDescription>
+                Tạo playlist mới để lưu các bài hát yêu thích của bạn.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <Input
+                placeholder="Playlist Name"
+                value={newPlaylist.title}
+                onChange={(e) =>
+                  setNewPlaylist({ ...newPlaylist, title: e.target.value })
+                }
+              />
+              <Input
+                placeholder="Description (optional)"
+                value={newPlaylist.description}
+                onChange={(e) =>
+                  setNewPlaylist({
+                    ...newPlaylist,
+                    description: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setShowCreateBox(false);
+                  setNewPlaylist({ title: "", description: "", source: "Local" });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreate}>Create</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </header>
 
-      {/* Create Playlist Form */}
-      {showCreateBox && (
-        <div className="bg-[#282828] p-6 rounded-lg mb-8 shadow-xl">
-          <h2 className="text-xl font-semibold mb-4">Create New Playlist</h2>
-          <input
-            type="text"
-            placeholder="Playlist Name"
-            className="w-full p-3 mb-4 bg-[#3e3e3e] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1db954] placeholder-gray-400"
-            value={newPlaylist.title}
-            onChange={(e) =>
-              setNewPlaylist({ ...newPlaylist, title: e.target.value })
-            }
-          />
-          <input
-            type="text"
-            placeholder="Description (optional)"
-            className="w-full p-3 mb-4 bg-[#3e3e3e] text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1db954] placeholder-gray-400"
-            value={newPlaylist.description}
-            onChange={(e) =>
-              setNewPlaylist({ ...newPlaylist, description: e.target.value })
-            }
-          />
-          <div className="flex gap-3">
-            <button
-              onClick={handleCreate}
-              className="px-5 py-2 bg-[#1ed760] text-black font-semibold rounded-full hover:bg-[#1db954] transition-colors"
-            >
-              Create
-            </button>
-            <button
-              onClick={() => setShowCreateBox(false)}
-              className="px-5 py-2 bg-[#3e3e3e] text-white font-semibold rounded-full hover:bg-[#4e4e4e] transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Playlists Grid */}
+      {/* Playlists List - Horizontal Cards */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Your Playlists</h2>
         {playlists.length === 0 ? (
-          <p className="text-gray-400">No playlists yet. Create one to get started!</p>
+          <p className="text-gray-400">
+            No playlists yet. Create one to get started!
+          </p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {playlists.map((p) => (
-              <div
-                key={p.id}
-                className="group bg-[#282828] rounded-lg p-4 hover:bg-[#3e3e3e] transition-colors shadow-md"
-              >
-                <div
-                  onClick={() => handleSelectPlaylist(p)}
-                  className="cursor-pointer"
-                >
-                  <div className="w-full h-40 bg-gradient-to-br from-[#1db954] to-[#121212] rounded-md mb-3"></div>
-                  <h3 className="text-lg font-semibold truncate">{p.title}</h3>
-                  <p className="text-sm text-gray-400 truncate">{p.description || "No description"}</p>
-                </div>
-                <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handlePlayPlaylist(p)}
-                    className="flex-1 px-3 py-2 bg-[#1ed760] text-black rounded-full hover:bg-[#1db954] transition-colors"
+          <ScrollArea className="h-[500px] w-full">
+            <div className="space-y-2 pr-4">
+              {playlists.map((p) => {
+                const songCount = p.songs?.length || 0;
+                return (
+                  <div
+                    key={p.id}
+                    className="group flex items-center gap-4 p-2.5 bg-[#282828] rounded-lg hover:bg-[#3e3e3e] transition-all hover:scale-[1.01] cursor-pointer"
+                    onClick={() => handleSelectPlaylist(p)}
                   >
-                    Play
-                  </button>
-                  <button
-                    onClick={() => handleDeletePlaylist(p.id)}
-                    className="flex-1 px-3 py-2 bg-[#ff4d4d] text-white rounded-full hover:bg-[#ff3333] transition-colors"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+                    {/* Thumbnail bên trái */}
+                    <div className="w-14 h-14 bg-gradient-to-br from-[#1db954] to-[#121212] rounded-lg flex-shrink-0"></div>
+                    {/* Playlist info */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold truncate text-white">
+                        {p.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 truncate">
+                        {songCount} {songCount === 1 ? "bài hát" : "bài hát"}
+                      </p>
+                    </div>
+                    {/* 3-dot dropdown menu */}
+                    <div
+                      ref={(el) => (dropdownRefs.current[p.id] = el)}
+                      className="relative flex-shrink-0"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button
+                        onClick={() =>
+                          setOpenDropdownId(
+                            openDropdownId === p.id ? null : p.id
+                          )
+                        }
+                        className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                      >
+                        <MoreVertical className="w-5 h-5 text-gray-400" />
+                      </button>
+                      {openDropdownId === p.id && (
+                        <div className="absolute right-0 top-full mt-2 z-50 min-w-[8rem] overflow-hidden rounded-md border border-gray-700 bg-[#282828] shadow-lg">
+                          <div
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-white hover:bg-gray-700 cursor-pointer transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handlePlayPlaylist(p);
+                              setOpenDropdownId(null);
+                            }}
+                          >
+                            <Play className="w-4 h-4" />
+                            Play
+                          </div>
+                          <div
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-500/20 cursor-pointer transition-colors border-t border-gray-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (
+                                window.confirm(
+                                  "Bạn có chắc muốn xóa playlist này?"
+                                )
+                              ) {
+                                handleDeletePlaylist(p.id);
+                              }
+                              setOpenDropdownId(null);
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </ScrollArea>
         )}
       </div>
 
       {/* Selected Playlist Songs */}
       {selectedPlaylist && (
-        <div className="bg-[#282828] p-6 rounded-lg shadow-xl">
-          <h2 className="text-xl font-semibold mb-4">
-            {selectedPlaylist.title}
-          </h2>
-          {songs.length === 0 ? (
-            <p className="text-gray-400">No songs in this playlist yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {songs.map((song, index) => (
-                <div
-                  key={song.id}
-                  className="flex justify-between items-center p-3 rounded-lg hover:bg-[#3e3e3e] cursor-pointer transition-colors"
-                  onClick={() => handlePlaySong(index)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#1db954] to-[#121212] rounded-md"></div>
-                    <div>
-                      <p className="font-medium">{song.title}</p>
-                      <p className="text-sm text-gray-400">{song.artist?.name || "Unknown"}</p>
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>{selectedPlaylist.title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {songs.length === 0 ? (
+              <p className="text-gray-400">No songs in this playlist yet.</p>
+            ) : (
+              <ScrollArea className="h-[400px] w-full">
+                <div className="space-y-2 pr-4">
+                  {songs.map((song, index) => (
+                    <div
+                      key={song.id}
+                      className="flex justify-between items-center p-2.5 rounded-lg hover:bg-[#3e3e3e] cursor-pointer transition-colors"
+                      onClick={() => handlePlaySong(index)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[#1db954] to-[#121212] rounded-lg flex-shrink-0"></div>
+                        <div>
+                          <p className="font-medium text-white">{song.title}</p>
+                          <p className="text-sm text-gray-400">
+                            {song.artist?.name || "Unknown"}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-400">
+                        {song.duration || 0}s
+                      </p>
                     </div>
-                  </div>
-                  <p className="text-sm text-gray-400">{song.duration || 0}s</p>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </ScrollArea>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );

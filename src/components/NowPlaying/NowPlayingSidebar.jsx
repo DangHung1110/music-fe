@@ -85,7 +85,7 @@ const NowPlayingSidebar = ({ isOpen, onClose }) => {
 
       {currentSong ? (
         <div className="flex flex-col h-full min-h-0">
-          <div className="flex-1 overflow-y-auto px-5 pb-6 space-y-6">
+          <div className="flex-1 overflow-y-auto px-5 pb-24 space-y-6">
             {/* Artwork & meta */}
             <section className="pt-5">
               <img

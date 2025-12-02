@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+vercel.json
+DEPLOY_VERCEL.md
 
