@@ -2,7 +2,7 @@ import React from "react";
 import { Route } from "react-router-dom";
 import AuthLayout from "../layouts/AuthLayout";
 import Login from "../components/Auth/login";
-import Register from "../components/Auth/Register";
+import Register from "../components/Auth/register";
 import SocialCallback from "../components/Auth/SocialCallback";
 
 const AuthRouter = [
